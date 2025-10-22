@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Exo+2:ital,wght@0,100..900;1,100..900&family=Geologica:wght@100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Rampart+One&family=UoqMunThenKhung&family=Zen+Tokyo+Zoo&display=swap');
+header {
+    background-color: black;
+    position: fixed
+    
+}
+body {
+    background-color: rgb(0, 0, 1);
+    font-family: 'Motserrat', sans-serif;
+    
+}
+.containers {
+    height: 80px;
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.nav {
+    display: flex;
+    gap: 30px;
+    margin-right: 500px;
+    font-size: 20px;
+}   
+.logo {
+    font-family:"Rampart One", sans-serif;
+    color: rgb(32, 141, 236);
+    margin-left: 150px;
+    font-size: 30px;
+    font-weight: 900;
+    
+}
+.border a {
+    margin-right: 50px;
+    text-decoration: none;
+    color: black;
+    background-color: coral;
+    padding: 10px;
+    border-radius: 20px;
+}
+.logo2 {
+    width: 44px;
+    margin-top: 5px;
+    margin-right: 5px;
+}
+.img {
+    width: 100%;
+    margin-top: 20px;
+    object-fit: cover;
+    height: 1200px;
+    transition: all 0.5s linear
+    
+
+    
+}
+.center {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 70%;
+    left: 50%;
+    background-color: rgba(231, 230, 230, 0.395);
+    padding: 10px;
+    border-radius: 30px;
+}
+.text {
+    text-align: center;
+}
+.text h2 {
+    font-size: 35px;
+}
+.text p {
+    color: rgb(239, 136, 0);
+}
+.card {
+    justify-content: space-between;
+    gap: 20px;
+    width: fit-content;
+    background-color: rgb(189, 222, 72);
+    height: 300px;
+    border-radius: 20px;
+    padding: 10px;
+}
+.card img {
+    width: 300px;
+    height: 150px;
+}
+.flex {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-end;
+    height: 500px;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-top: 130px;
+}
+.bud {
+    display: flex;
+    gap: 200px;
+
+}
+nav p {
+    color: rgb(247, 250, 250);
+    
+    
+    
+}

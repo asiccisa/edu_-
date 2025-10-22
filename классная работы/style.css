@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+header {
+    positio: fixed;
+}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 500;
+    color: #333;
+}
+.hero {
+    text-align: center;
+    justify-content: center;
+    flex-direction: column;
+} 
+.hero h1{
+    color: darkgoldenrod;
+}

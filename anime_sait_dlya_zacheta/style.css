@@ -1,0 +1,79 @@
+body {
+    background-color: rgb(178, 221, 237);
+}
+.containers {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.nav {
+    display: flex;
+    gap: 20px;
+}
+.logo {
+    font-size: 30px;
+    font-weight: 900;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif ;
+}
+.border a {
+    text-decoration: none;
+    color: black;
+    background-color: coral;
+    padding: 10px;
+    border-radius: 20px;
+}
+.img {
+    width: 100%;
+    margin-top: 20px;
+    object-fit: cover;
+    height: 1200px;
+    transition: all 0.5s linear
+    
+
+    
+}
+.center {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 70%;
+    left: 50%;
+    background-color: rgba(231, 230, 230, 0.395);
+    padding: 10px;
+    border-radius: 30px;
+}
+.text {
+    text-align: center;
+}
+.text h2 {
+    font-size: 35px;
+}
+.text p {
+    color: rgb(239, 136, 0);
+}
+.card {
+    justify-content: space-between;
+    gap: 20px;
+    width: fit-content;
+    background-color: rgb(189, 222, 72);
+    height: 300px;
+    border-radius: 20px;
+    padding: 10px;
+}
+.card img {
+    width: 300px;
+    height: 150px;
+}
+.flex {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: flex-end;
+    height: 500px;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding-top: 130px;
+}
+.bud {
+    display: flex;
+    gap: 200px;
+
+}

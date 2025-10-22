@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Мини-шахматы 6×6</title>
+<style>
+  :root{
+    --light:#f0d9b5;
+    --dark:#b58863;
+    --highlight: rgba(80,200,120,0.6);
+    --capture: rgba(230,80,80,0.6);
+  }
+  body{
+    font-family: Arial, sans-serif;
+    display:flex;
+    gap:20px;
+    padding:20px;
+    align-items:flex-start;
+    background:linear-gradient(180deg,#e8f2ff,#fff);
+  }
+  .board-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .board{
+    display:grid;
+    grid-template-columns: repeat(6,64px);
+    grid-template-rows: repeat(6,64px);
+    border: 6px solid #333;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  }
+  .cell{
+    width:64px;height:64px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:34px; cursor: pointer; user-select:none;
+  }
+  .cell.light{ background:var(--light); }
+  .cell.dark{ background:var(--dark); color:#111; }
+
+  .cell.highlight{ box-shadow: inset 0 0 0 4px var(--highlight); }
+  .cell.capture{ box-shadow: inset 0 0 0 4px var(--capture); }
+
+  .controls{
+    margin-top:10px;
+    display:flex;gap:10px;
+  }
+  button{ padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:#1976d2; color:#fff;}
+  button.secondary{ background:#4caf50;}
+  .panel{
+    max-width:320px;
+    background:#fff;
+    padding:14px;
+    border-radius:10px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+  h2{ margin:0 0 10px 0; font-size:16px; }
+  .log{ height:150px; overflow:auto; background:#fafafa; border-radius:6px; padding:8px; font-size:13px; }
+  .status{ margin-bottom:10px; font-weight:600; }
+  .coords{ font-size:12px; color:#666; margin-top:6px; }
+  .small{ font-size:13px; color:#444; }
+</style>
+</head>
+<body>
+
+  <div class="board-wrap">
+    <div id="board" class="board"></div>
+
+    <div class="controls">
+      <button id="resetBtn">Новая игра</button>
+      <button id="flipBtn" class="secondary">Повернуть доску</button>
+    </div>
+    <div class="coords">Доска 6×6 — ряды 1..6, столбцы a..f</div>
+  </div>
+
+  <div class="panel">
+    <h2>Мини-шахматы — управление</h2>
+    <div class="status" id="status">Ход: Белые</div>
+    <div class="small">Правила (упрощённо):</div>
+    <ul class="small">
+      <li>Белые играют первыми.</li>
+      <li>Пешки ходят и бьют как обычно (на 1 вперёд, взятие по диагонали). Превращение пешки не реализовано.</li>
+      <li>Игра заканчивается, когда захвачен король.</li>
+      <li>Для хода: клик по своей фигуре → затем клик по клетке назначения.</li>
+    </ul>
+
+    <div style="margin-top:10px">
+      <div class="small">Лог ходов:</div>
+      <div id="log" class="log"></div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div class="small">Фигуры (символы):</div>
+      <div class="small">Белые: ♔♕♖♗♘♙  — Чёрные: ♚♛♜♝♞♟</div>
+    </div>
+  </div>
+
+<script>
+/*
+  Мини-шахматы 6x6 — простой движок для браузера.
+  - Доска 6x6: строки 0..5 (0 — верх), столбцы 0..5 (0 — a).
+  - Белые внизу, ходят первыми и двигаются вверх (row-1).
+  - Король/ферзь/ладья/слон/конь/пешка поддерживаются.
+  - Игра заканчивается при взятии короля.
+*/
+
+// unicode для фигур
+const UNICODE = {
+  'wK':'♔','wQ':'♕','wR':'♖','wB':'♗','wN':'♘','wP':'♙',
+  'bK':'♚','bQ':'♛','bR':'♜','bB':'♝','bN':'♞','bP':'♟'
+};
+
+const cols = ['a','b','c','d','e','f'];
+const ROWS = 6, COLS = 6;
+
+let boardEl = document.getElementById('board');
+let statusEl = document.getElementById('status');
+let logEl = document.getElementById('log');
+let resetBtn = document.getElementById('resetBtn');
+let flipBtn = document.getElementById('flipBtn');
+
+let board = []; // 2D array of cells or null
+let turn = 'w'; // 'w' or 'b'
+let selected = null; // {r,c}
+let legalMoves = []; // array of {r,c,type} type: 'move'|'capture'
+let flipped = false;
+let gameOver = false;
+
+// Создать DOM клеток
+function createBoardDOM(){
+  boardEl.innerHTML = '';
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      // цвет
+      const light = ((r+c) % 2 === 0);
+      cell.classList.add(light ? 'light' : 'dark');
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.addEventListener('click', onCellClick);
+      boardEl.appendChild(cell);
+    }
+  }
+}
+
+// Инициализация стартовой позиции (6x6)
+function initBoard(){
+  // пустая матрица
+  board = Array.from({length:ROWS},()=>Array(COLS).fill(null));
+
+  // расстановка (похожие на уменьшенный классический порядок)
+  // row 0: чёрные major, row1: чёрные пешки
+  // row 4: белые пешки, row5: белые major
+  const major = ['R','N','B','Q','K','R']; // зеркально, но в 6x6 так
+  for(let c=0;c<COLS;c++){
+    board[0][c] = {color:'b', type: major[c]};
+    board[1][c] = {color:'b', type: 'P'};
+    board[4][c] = {color:'w', type: 'P'};
+    board[5][c] = {color:'w', type: major[c]};
+  }
+
+  turn = 'w';
+  selected = null;
+  legalMoves = [];
+  gameOver = false;
+  render();
+  logEl.innerHTML = '';
+  statusEl.textContent = 'Ход: Белые';
+}
+
+// Рендер доски в DOM
+function render(){
+  // order of cells when flipped
+  const children = Array.from(boardEl.children);
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const idx = flipped ? ((ROWS-1-r)*COLS + (COLS-1-c)) : (r*COLS + c);
+      const cell = children[idx];
+      // очистить подсветку
+      cell.classList.remove('highlight','capture','selected');
+      const piece = board[r][c];
+      cell.textContent = piece ? UNICODE[piece.color + piece.type] || '?' : '';
+      cell.title = getCoordName(r,c);
+    }
+  }
+  // подсветка возможных ходов
+  highlightMoves();
+}
+
+// координаты в шахматной нотации (a1..f6) (1 — нижняя)
+function getCoordName(r,c){
+  // r 0 -> rank 6, r 5 -> rank1
+  const rank = ROWS - r;
+  return cols[c] + rank;
+}
+
+// Обработчик клика по клетке
+function onCellClick(e){
+  if(gameOver) return;
+  const r = parseInt(this.dataset.r), c = parseInt(this.dataset.c);
+  const piece = board[r][c];
+
+  // если есть выбранная фигура и эта клетка — легальный ход
+  const lm = legalMoves.find(m => m.r === r && m.c === c);
+  if(selected && lm){
+    doMove(selected.r, selected.c, r, c, lm.type);
+    return;
+  }
+
+  // если кликнули по своей фигуре — выбрать её
+  if(piece && piece.color === turn){
+    selected = {r,c};
+    computeLegalMoves(r,c);
+    applySelectionVisual();
+    return;
+  }
+
+  // иначе — очистить выделение
+  selected = null;
+  legalMoves = [];
+  applySelectionVisual();
+}
+
+// показать выделение и подсветку
+function applySelectionVisual(){
+  const children = Array.from(boardEl.children);
+  children.forEach(ch => ch.classList.remove('selected'));
+  if(selected){
+    const idx = flipped ? ((ROWS-1-selected.r)*COLS + (COLS-1-selected.c)) : (selected.r*COLS + selected.c);
+    children[idx].classList.add('selected');
+  }
+  render();
+}
+
+// Подсветить легальные ходы (рендер вызывает эту функцию)
+function highlightMoves(){
+  const children = Array.from(boardEl.children);
+  legalMoves.forEach(m => {
+    const idx = flipped ? ((ROWS-1-m.r)*COLS + (COLS-1-m.c)) : (m.r*COLS + m.c);
+    children[idx].classList.add(m.type === 'capture' ? 'capture' : 'highlight');
+  });
+  // также подсвет выбранной клетке (если есть)
+  if(selected){
+    const sidx = flipped ? ((ROWS-1-selected.r)*COLS + (COLS-1-selected.c)) : (selected.r*COLS + selected.c);
+    children[sidx].classList.add('highlight');
+  }
+}
+
+// выполнить ход (без проверки шаха)
+function doMove(r1,c1,r2,c2,type){
+  const piece = board[r1][c1];
+  const target = board[r2][c2];
+  // лог
+  const moveNotation = `${getCoordName(r1,c1)}→${getCoordName(r2,c2)}`;
+  log(`${piece.color==='w' ? 'Белые' : 'Чёрные'}: ${piece.type} ${moveNotation}${type==='capture' ? ' x' : ''}`);
+  // проверка короля — если взяли короля — конец
+  if(target && target.type === 'K'){
+    board[r2][c2] = piece;
+    board[r1][c1] = null;
+    render();
+    gameOver = true;
+    statusEl.textContent = `${piece.color==='w' ? 'Белые' : 'Чёрные'} выиграли (король взят)!`;
+    return;
+  }
+  // обычный перенос
+  board[r2][c2] = piece;
+  board[r1][c1] = null;
+
+  // простая обработка пешки: движение вперед только на 1 (без двойного хода, без превращения)
+  // можно добавить превью/превращение позже
+
+  // смена хода
+  turn = (turn === 'w') ? 'b' : 'w';
+  statusEl.textContent = turn === 'w' ? 'Ход: Белые' : 'Ход: Чёрные';
+  selected = null;
+  legalMoves = [];
+  render();
+}
+
+// записать в лог
+function log(text){
+  const p = document.createElement('div');
+  p.textContent = text;
+  logEl.prepend(p);
+}
+
+// вычислить легальные ходы для фигуры (без шах/мат учёта)
+function computeLegalMoves(r,c){
+  legalMoves = [];
+  const piece = board[r][c];
+  if(!piece) return;
+  const color = piece.color;
+  const dir = color === 'w' ? -1 : 1; // белые идут вверх (r-1)
+  const enemy = (p) => p && p.color !== color;
+
+  const inBounds = (rr,cc) => rr>=0 && rr<ROWS && cc>=0 && cc<COLS;
+
+  const addMove = (rr,cc, type='move') => {
+    legalMoves.push({r:rr,c:cc,type});
+  };
+
+  switch(piece.type){
+    case 'P': {
+      // forward one if empty
+      const fr = r + dir;
+      if(inBounds(fr,c) && !board[fr][c]){
+        addMove(fr,c,'move');
+      }
+      // captures
+      for(const dc of [-1,1]){
+        const cr = r + dir, cc = c + dc;
+        if(inBounds(cr,cc) && board[cr][cc] && board[cr][cc].color !== color){
+          addMove(cr,cc,'capture');
+        }
+      }
+      break;
+    }
+    case 'N': {
+      const offs = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      for(const [dr,dc] of offs){
+        const rr=r+dr, cc=c+dc;
+        if(!inBounds(rr,cc)) continue;
+        if(!board[rr][cc]) addMove(rr,cc,'move');
+        else if(board[rr][cc].color !== color) addMove(rr,cc,'capture');
+      }
+      break;
+    }
+    case 'B': {
+      const dirs = [[-1,-1],[-1,1],[1,-1],[1,1]];
+      for(const [dr,dc] of dirs){
+        let rr=r+dr, cc=c+dc;
+        while(inBounds(rr,cc)){
+          if(!board[rr][cc]) addMove(rr,cc,'move');
+          else { if(board[rr][cc].color !== color) addMove(rr,cc,'capture'); break; }
+          rr+=dr; cc+=dc;
+        }
+      }
+      break;
+    }
+    case 'R': {
+      const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+      for(const [dr,dc] of dirs){
+        let rr=r+dr, cc=c+dc;
+        while(inBounds(rr,cc)){
+          if(!board[rr][cc]) addMove(rr,cc,'move');
+          else { if(board[rr][cc].color !== color) addMove(rr,cc,'capture'); break; }
+          rr+=dr; cc+=dc;
+        }
+      }
+      break;
+    }
+    case 'Q': {
+      const dirs = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+      for(const [dr,dc] of dirs){
+        let rr=r+dr, cc=c+dc;
+        while(inBounds(rr,cc)){
+          if(!board[rr][cc]) addMove(rr,cc,'move');
+          else { if(board[rr][cc].color !== color) addMove(rr,cc,'capture'); break; }
+          rr+=dr; cc+=dc;
+        }
+      }
+      break;
+    }
+    case 'K': {
+      for(let dr=-1; dr<=1; dr++){
+        for(let dc=-1; dc<=1; dc++){
+          if(dr===0 && dc===0) continue;
+          const rr=r+dr, cc=c+dc;
+          if(!inBounds(rr,cc)) continue;
+          if(!board[rr][cc]) addMove(rr,cc,'move');
+          else if(board[rr][cc].color !== color) addMove(rr,cc,'capture');
+        }
+      }
+      break;
+    }
+  }
+}
+
+// UI: новые игра, повернуть доску
+resetBtn.addEventListener('click', ()=>{ flipped=false; initBoard(); });
+flipBtn.addEventListener('click', ()=>{ flipped = !flipped; render(); });
+
+// init
+createBoardDOM();
+initBoard();
+
+</script>
+</body>
+</html>

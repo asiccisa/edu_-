@@ -1,0 +1,32 @@
+.static {
+    position: relative;
+    padding: 50px;
+    border-radius: 20px;
+    background-color: skyblue;
+    width: 200px;
+    top: 200px;
+    margin-top: 100px;
+}
+.relative {
+    position: relative;
+    padding: 50px;
+    border-radius: 20px;
+    background-color: lightgreen;
+    top: 200px;
+    left: 200px;
+    width: 300px;
+}
+.absolute {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: blueviolet;
+}
+.fixed {
+    position: sticky;
+    width: 100%;
+    padding: 20px;
+    background-color: thistle;
+    z-index: -1;
+    top: 20px;
+}

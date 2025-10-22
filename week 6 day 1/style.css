@@ -1,0 +1,64 @@
+
+.btn{
+    padding: 7px 14px;
+    font-size: 20px;
+    font-weight: 700;
+    background-color: skyblue;
+    color: #fff;
+    border-radius: 50px;
+    /* transition-duration: 0.2s;
+    transition-property: background-color, color;
+    transition-timing-function: ease-in; */
+    transition: all .2s linear
+}
+
+.btn:hover{
+    background-color: red;
+    color: #000;
+    transition: scale(1.1);
+}
+
+@keyframes circle{
+    0%{
+        transform: rotate(0deg);
+        background-color: aqua;
+    }
+    25% {
+        background-color: blueviolet;
+        transform: rotate(90deg);        
+    }
+    50%{
+        transform: rotate(180deg);
+        background-color: rgb(14, 138, 59);
+    }
+    100%{ 
+        transform: rotate(360deg);
+        background-color: blueviolet;
+
+    }
+
+}
+
+.anime{
+    width: 100px;
+    height: 100px;
+    background-color: aqua;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 100%;
+
+   animation: circle 1s linear infinite;
+}
+.transform{
+    width: 200px;
+    height: 200px;
+    background-color: blueviolet;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    transform: translate(500px, 100px);
+    transform: scale(1.5);
+    transform: skew(20deg);
+}
